@@ -42,4 +42,22 @@ router.post("/login", (req, res) => {
         }
     });
 });
+
+router.use("/get", (req, res, next) => {
+    db.User.findById(req.headers.access_token, (err, obj) => {
+        if (err) {
+            res.status(500).json({ error: 1, message: "server internal problem" });
+        } else {
+            if (obj == null) {
+                res.status(400).json({ error: 1, message: "there is no object that matched with access_token" });
+            } else {
+                res.locals.obj = obj;
+                next();
+            }
+        }
+    });
+});
+router.get("/get", (req, res) => {
+    res.status(200).json({status:1,data:res.locals.obj, message:"successfully operation"});
+})
 module.exports = router;
