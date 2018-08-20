@@ -30,6 +30,7 @@ router.post('/register', (req, res) => {
         }
     });
 });
+
 router.post("/login", (req, res) => {
     db.User.find({ username: req.body.username, password: md5(req.body.password) }, (err, obj) => {
         if (err) {
@@ -44,8 +45,31 @@ router.post("/login", (req, res) => {
     });
 });
 
-
 router.get("/get", authentication.requiredToken, (req, res, next) => {
     res.status(200).json({ status: 1, data: req.obj, message: "successfully operation" });
-})
+});
+
+router.put("/delete", authentication.requiredToken, (req, res, next) => {
+    let id = req.obj._id;
+    db.User.findByIdAndRemove(id, function(err, obj) {
+        if (err) {
+            res.status(500).json({ error: 1, message: "error during deleting the element" });
+        } else {
+            res.status(200).json({ status: 1, data: obj, message: "deletion successfully" });
+        }
+    });
+});
+
+router.get("/list/:page", (req, res) => {
+    let page = req.params.page;
+    let limit = 10;
+
+    db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
+        if (err) {
+            res.status(500).json({ error: 1, message: "server internal problem" });
+        } else {
+            res.status(200).json({ status: 1, data: items, message: "operation successfull" });
+        }
+    });
+});
 module.exports = router;
