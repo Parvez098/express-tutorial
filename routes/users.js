@@ -59,4 +59,26 @@ router.put("/delete", authentication.requiredToken, (req, res, next) => {
         }
     });
 });
+
+router.get("/list/:page", (req, res) => {
+    let page = req.params.page;
+
+    if (page == 0) {
+        db.User.find().limit(10).exec((err, items) => {
+            if (err) {
+                res.status(500).json({ error: 1, message: "server internal problem" });
+            } else {
+                res.status(200).json({ status: 1, data: items, message: "operation successfull" });
+            }
+        });
+    } else if (page == 1) {
+        db.User.find().skip(10).limit(10).exec((err, items) => {
+            if (err) {
+                res.status(500).json({ error: 1, message: "server internal problem" });
+            } else {
+                res.status(200).json({ status: 1, data: items, message: "operation successfull" });
+            }
+        });
+    }
+});
 module.exports = router;
