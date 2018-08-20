@@ -10,7 +10,7 @@ router.post('/register', (req, res) => {
             res.status(400).send(err);
         } else {
             if (obj[0] != null) {
-                res.status(400).json({error:1, message: "already exist user please provide unique username or email "});
+                res.status(400).json({ error: 1, message: "already exist user please provide unique username or email " });
             } else {
                 if (req.body.password === req.body.confirmPassword) {
                     req.body.password = md5(req.body.password);
@@ -19,14 +19,28 @@ router.post('/register', (req, res) => {
                         if (err) {
                             res.status(400).send(err);
                         } else {
-                            res.json({status: 1, data: obj,message: "user successfully registered"});
+                            res.json({ status: 1, data: obj, message: "user successfully registered" });
                         }
                     });
                 } else {
-                    res.status(400).json({error:1, message: "please check your password"});
+                    res.status(400).json({ error: 1, message: "please check your password" });
                 }
             }
         }
     });
 });
+
+router.post("/login", (req, res) => {
+    db.User.find({ username: req.body.username, password: req.body.password }, (err, obj) => {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            if (obj[0] != null) {
+                res.json({ status: 1, data: obj[0], message: "user found", access_token: obj[0]._id });
+            } else {
+                res.status(500).json({ error: 1, message: "there is no user whose credentials matched in a data base" });
+            }
+        }
+    });
+})
 module.exports = router;
