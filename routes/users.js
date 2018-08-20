@@ -39,7 +39,7 @@ router.post("/login", (req, res) => {
         } else {
             if (obj[0] != null) {
                 let id = obj[0]._id;
-                let miliSecond = 2*60*1000;
+                let miliSecond = 60 * 60 * 1000;
                 let token = md5(new Date());
                 let expiry_time = new Date().getTime() + miliSecond;
                 console.log(expiry_time - token);
