@@ -29,9 +29,8 @@ router.post('/register', (req, res) => {
         }
     });
 });
-
 router.post("/login", (req, res) => {
-    db.User.find({ username: req.body.username, password: req.body.password }, (err, obj) => {
+    db.User.find({ username: req.body.username, password: md5(req.body.password) }, (err, obj) => {
         if (err) {
             res.status(500).send(err);
         } else {
@@ -42,5 +41,5 @@ router.post("/login", (req, res) => {
             }
         }
     });
-})
+});
 module.exports = router;
