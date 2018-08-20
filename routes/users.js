@@ -45,7 +45,7 @@ router.post("/login", (req, res) => {
 });
 
 
-router.get("/get", authentication(), (req, res) => {
+router.get("/get", authentication.requiredToken, (req, res, next) => {
     res.status(200).json({ status: 1, data: req.obj, message: "successfully operation" });
 })
 module.exports = router;
