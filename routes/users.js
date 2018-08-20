@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const db = require("../model/user");
 let md5 = require('md5');
+const authentication = require("../middleware/authentication");
 /* GET users listing. */
 
 router.post('/register', (req, res) => {
@@ -42,4 +43,9 @@ router.post("/login", (req, res) => {
         }
     });
 });
+
+
+router.get("/get", authentication.requiredToken, (req, res, next) => {
+    res.status(200).json({ status: 1, data: req.obj, message: "successfully operation" });
+})
 module.exports = router;
