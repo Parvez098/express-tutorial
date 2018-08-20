@@ -25,10 +25,13 @@ module.exports.validateToken = (req, res, next) => {
             res.status(500).json({ error: 1, message: "server internal problem" });
         } else {
             let time = (new Date()).getTime();
-            if (time <= obj[0].expiry); {
+            if (time <= obj[0].expiry){
                 req.obj = obj[0];
                 next();
+            } else {
+                res.status(400).json({ error: 1, message: "your taken has expired" });
             }
         }
+
     });
 }
