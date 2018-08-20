@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const db = require("../model/user");
 let md5 = require('md5');
+const authentication = require("../middleware/authentication");
 /* GET users listing. */
 
 router.post('/register', (req, res) => {
@@ -43,21 +44,8 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.use("/get", (req, res, next) => {
-    db.User.findById(req.headers.access_token, (err, obj) => {
-        if (err) {
-            res.status(500).json({ error: 1, message: "server internal problem" });
-        } else {
-            if (obj == null) {
-                res.status(400).json({ error: 1, message: "there is no object that matched with access_token" });
-            } else {
-                res.locals.obj = obj;
-                next();
-            }
-        }
-    });
-});
-router.get("/get", (req, res) => {
-    res.status(200).json({status:1,data:res.locals.obj, message:"successfully operation"});
+
+router.get("/get", authentication(), (req, res) => {
+    res.status(200).json({ status: 1, data: req.obj, message: "successfully operation" });
 })
 module.exports = router;
