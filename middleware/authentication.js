@@ -1,5 +1,5 @@
 const db = require("../model/user");
-const AccessToken =require("../model/access-token");
+const AccessToken = require("../model/access-token");
 module.exports.requiredToken = (req, res, next) => {
     let token = req.headers.access_token;
     db.User.findById(token, (err, obj) => {
@@ -17,22 +17,18 @@ module.exports.requiredToken = (req, res, next) => {
 }
 
 
-module.exports.validateToken = (req,res,next)=>{
+module.exports.validateToken = (req, res, next) => {
     let token = req.headers.token;
-    AccessToken.find({access_token:token},(err,obj)=>{
-          
-          if(err)
-          {
-            res.status(500).json({error:1,message:"server internal problem"});
-          }
-          else
-          {
+    AccessToken.find({ access_token: token }, (err, obj) => {
+
+        if (err) {
+            res.status(500).json({ error: 1, message: "server internal problem" });
+        } else {
             let time = (new Date()).getTime();
-            if(time<=obj[0].expiry);
-            {
-                req.obj=obj[0];
+            if (time <= obj[0].expiry); {
+                req.obj = obj[0];
                 next();
             }
-          }
+        }
     });
 }
