@@ -1,7 +1,6 @@
 const db = require("../model/user");
 const AccessToken = require("../model/access-token");
-const { check, validationResult } = require('express-validator/check');
-const { sanitizeBody } = require('express-validator/filter');
+
 
 module.exports.requiredToken = (req, res, next) => {
     let token = req.headers.access_token;
