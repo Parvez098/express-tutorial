@@ -90,7 +90,7 @@ router.get("/list/:page", (req, res) => {
     });
 });
 
-router.post("/address", authentication.validateToken, (req, res) => {
+router.post("/address", [authentication.validateToken, authentication.dataValidation], (req, res) => {
     let user_id = req.obj.user_id;
     let address = req.body.address;
     let city = req.body.city;
