@@ -41,12 +41,14 @@ module.exports.validateToken = (req, res, next) => {
 
 
 module.exports.dataValidation = (req, res, next) => {
+    let body = req.body;
     req.checkBody('city').notEmpty().withMessage("required city").len(2, 10).withMessage("city length must be in 2 to 10 character");
     req.checkBody('state').notEmpty().withMessage("required state").len(2, 10);
     req.checkBody("phone_no").notEmpty().withMessage("phone number can't be empty").len(10).withMessage("");
     req.checkBody('pin_code').notEmpty().withMessage("please type your pin code");
     req.checkBody("address").notEmpty().withMessage("please type your address");
-    if (req.validationErrors();) {
+    let errors = req.validationErrors();
+    if (errors) {
         res.status(400).json({ error: 1, data: body, errors: errors, msg: "bakwas" });
     } else {
         next();
