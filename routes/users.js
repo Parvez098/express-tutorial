@@ -5,6 +5,7 @@ const AccessToken = require("../model/access-token");
 let md5 = require('md5');
 const authentication = require("../middleware/authentication");
 const AddressCollection = require("../model/address");
+const DataValidation = require("../Data_validation/validation");
 
 /* GET users listing. */
 
@@ -90,22 +91,23 @@ router.get("/list/:page", (req, res) => {
     });
 });
 
-router.post("/address", [authentication.validateToken, authentication.dataValidation], (req, res) => {
-    let user_id = req.obj.user_id;
-    let address = req.body.address;
-    let city = req.body.city;
-    let state = req.body.state;
-    let pin_code = req.body.pin_code;
-    let phone_no = req.body.phone_no;
+router.post("/address", authentication.validateToken, async(req, res) => {
 
-    let obj = new AddressCollection({ user_id: user_id, address: address, city: city, state: state, pin_code: pin_code, phone_no: phone_no });
-    obj.save((err, obj) => {
-        if (err) {
-            res.status(500).json({ error: 1, message: "server internal problem" });
-        } else {
-            res.status(200).json({ status: 1, message: "ok", date: obj });
-        }
-    });
+    let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
+    if (result instanceof Error) {
+        result = result.message;
+        res.status(400).json({ error: 1, message: "exception occure", data: result });
+    } else {
+        let obj = new AddressCollection({ user_id: req.obj.user_id, address: result.body.address, city: result.body.city, state: result.body.state, pin_code: result.body.pin_code, phone_no: result.body.phone_no });
+        obj.save((err, obj) => {
+            if (err) {
+                res.status(500).json({ error: 1, message: "server internal problem" });
+            } else {
+                res.status(200).json({ status: 1, message: "ok", date: obj });
+            }
+        });
+
+    }
 });
 
 
