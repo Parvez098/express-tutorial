@@ -98,7 +98,8 @@ router.post("/address", authentication.validateToken, async(req, res) => {
         result = result.message;
         res.status(400).json({ error: 1, message: "exception occure", data: result });
     } else {
-        let obj = new AddressCollection({ user_id: req.obj.user_id, address: result.body.address, city: result.body.city, state: result.body.state, pin_code: result.body.pin_code, phone_no: result.body.phone_no });
+        result['user_id'] = req.obj.user_id;
+        let obj = new AddressCollection(result);
         obj.save((err, obj) => {
             if (err) {
                 res.status(500).json({ error: 1, message: "server internal problem" });

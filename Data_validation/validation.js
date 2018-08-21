@@ -8,7 +8,7 @@ async function dataValidation(checkBody, validationErrors, body) {
     if (errors) {
         return new Error(JSON.stringify(errors[0]));
     } else {
-        return { flag: true, body: body };
+        return body
     }
 }
 
