@@ -4,6 +4,8 @@ const db = require("../model/user");
 const AccessToken = require("../model/access-token");
 let md5 = require('md5');
 const authentication = require("../middleware/authentication");
+const AddressCollection = require("../model/address");
+
 /* GET users listing. */
 
 router.post('/register', (req, res) => {
@@ -42,7 +44,6 @@ router.post("/login", (req, res) => {
                 let miliSecond = 60 * 60 * 1000;
                 let token = md5(new Date());
                 let expiry_time = new Date().getTime() + miliSecond;
-                console.log(expiry_time - token);
                 let timeToken = new AccessToken({ user_id: id, access_token: token, expiry: expiry_time });
 
                 timeToken.save((err, obj) => {
@@ -88,4 +89,6 @@ router.get("/list/:page", (req, res) => {
         }
     });
 });
+
+
 module.exports = router;
