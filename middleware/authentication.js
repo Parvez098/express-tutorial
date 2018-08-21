@@ -19,18 +19,18 @@ module.exports.requiredToken = (req, res, next) => {
 
 module.exports.validateToken = (req, res, next) => {
     let token = req.headers.token;
-    AccessToken.find({ access_token: token }, (err, obj) => {
+    AccessToken.findOne({ access_token: token, expiry: { $gte: (new Date()).getTime() } }, (err, obj) => {
 
         if (err) {
             res.status(500).json({ error: 1, message: "server internal problem" });
         } else {
-            let time = (new Date()).getTime();
-            if (time <= obj[0].expiry){
-                req.obj = obj[0];
-                next();
+            if (obj == null) {
+                res.status(400).json({ error: 1, message: "your token is expired" });
             } else {
-                res.status(400).json({ error: 1, message: "your taken has expired" });
+                req.obj = obj;
+                next();
             }
+
         }
 
     });
