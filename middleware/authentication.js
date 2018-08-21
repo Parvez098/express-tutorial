@@ -1,5 +1,5 @@
 const db = require("../model/user");
-
+const AccessToken = require("../model/access-token");
 module.exports.requiredToken = (req, res, next) => {
     let token = req.headers.access_token;
     db.User.findById(token, (err, obj) => {
@@ -13,5 +13,25 @@ module.exports.requiredToken = (req, res, next) => {
                 next();
             }
         }
+    });
+}
+
+
+module.exports.validateToken = (req, res, next) => {
+    let token = req.headers.token;
+    AccessToken.findOne({ access_token: token, expiry: { $gte: (new Date()).getTime() } }, (err, obj) => {
+
+        if (err) {
+            res.status(500).json({ error: 1, message: "server internal problem" });
+        } else {
+            if (obj == null) {
+                res.status(400).json({ error: 1, message: "your token is expired" });
+            } else {
+                req.obj = obj;
+                next();
+            }
+
+        }
+
     });
 }

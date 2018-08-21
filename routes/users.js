@@ -1,8 +1,11 @@
 var express = require('express');
 var router = express.Router();
 const db = require("../model/user");
+const AccessToken = require("../model/access-token");
 let md5 = require('md5');
 const authentication = require("../middleware/authentication");
+const AddressCollection = require("../model/address");
+
 /* GET users listing. */
 
 router.post('/register', (req, res) => {
@@ -37,7 +40,21 @@ router.post("/login", (req, res) => {
             res.status(500).send(err);
         } else {
             if (obj[0] != null) {
-                res.json({ status: 1, data: obj[0], message: "user found", access_token: obj[0]._id });
+                let id = obj[0]._id;
+                let miliSecond = 60 * 60 * 1000;
+                let token = md5(new Date());
+                let expiry_time = new Date().getTime() + miliSecond;
+                let timeToken = new AccessToken({ user_id: id, access_token: token, expiry: expiry_time });
+
+                timeToken.save((err, obj) => {
+
+                    if (err) {
+                        res.status(500).json({ error: 1, message: "error during saving the token" });
+                    } else {
+                        res.status(200).json({ status: 1, message: "everything is ok user saved and we have created our token", token: token });
+                    }
+                });
+
             } else {
                 res.status(500).json({ error: 1, message: "there is no user whose credentials matched in a data base" });
             }
@@ -45,11 +62,11 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/get", authentication.requiredToken, (req, res, next) => {
+router.get("/get", authentication.validateToken, (req, res, next) => {
     res.status(200).json({ status: 1, data: req.obj, message: "successfully operation" });
 });
 
-router.put("/delete", authentication.requiredToken, (req, res, next) => {
+router.put("/delete", authentication.validateToken, (req, res, next) => {
     let id = req.obj._id;
     db.User.findByIdAndRemove(id, function(err, obj) {
         if (err) {
@@ -72,4 +89,6 @@ router.get("/list/:page", (req, res) => {
         }
     });
 });
+
+
 module.exports = router;
