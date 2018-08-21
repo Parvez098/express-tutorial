@@ -90,5 +90,23 @@ router.get("/list/:page", (req, res) => {
     });
 });
 
+router.post("/address", authentication.validateToken, (req, res) => {
+    let user_id = req.obj.user_id;
+    let address = req.body.address;
+    let city = req.body.city;
+    let state = req.body.state;
+    let pin_code = req.body.pin_code;
+    let phone_no = req.body.phone_no;
+
+    let obj = new AddressCollection({ user_id: user_id, address: address, city: city, state: state, pin_code: pin_code, phone_no: phone_no });
+    obj.save((err, obj) => {
+        if (err) {
+            res.status(500).json({ error: 1, message: "server internal problem" });
+        } else {
+            res.status(200).json({ status: 1, message: "ok", date: obj });
+        }
+    });
+});
+
 
 module.exports = router;
