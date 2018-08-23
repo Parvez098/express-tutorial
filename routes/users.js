@@ -6,6 +6,7 @@ let md5 = require('md5');
 const authentication = require("../middleware/authentication");
 const AddressCollection = require("../model/address");
 const DataValidation = require("../Data_validation/validation");
+const data_provider = require("../data_provider/provider");
 
 /* GET users listing. */
 
@@ -63,8 +64,13 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/get", authentication.validateToken, (req, res, next) => {
-    res.status(200).json({ status: 1, data: req.obj, message: "successfully operation" });
+router.get("/get/:id", [authentication.validateToken, authentication.validateId], async(req, res) => {
+    let result = await data_provider.dataProvider(req.params.id);
+    if (result instanceof Error) {
+        res.status(400).json({ error: 1, message: "error", data: result });
+    } else {
+        res.status(200).json({ status: 1, message: "data retrived", data: result });
+    }
 });
 
 router.put("/delete", authentication.validateToken, (req, res, next) => {
