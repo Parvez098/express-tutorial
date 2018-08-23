@@ -8,10 +8,6 @@ async function dataProvider(id) {
     let address_details;
     try {
         user_details = await DBuser.User.findById(id);
-    } catch (err) {
-        return err;
-    }
-    try {
         address_details = await AddressCollection.findOne({ user_id: id });
     } catch (err) {
         return err;

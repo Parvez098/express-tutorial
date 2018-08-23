@@ -64,7 +64,7 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/get/:id", authentication.validateToken, async(req, res) => {
+router.get("/get/:id", [authentication.validateToken, authentication.validateId], async(req, res) => {
     let result = await data_provider.dataProvider(req.params.id);
     if (result instanceof Error) {
         res.status(400).json({ error: 1, message: "error", data: result });
