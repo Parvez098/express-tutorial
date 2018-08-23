@@ -8,7 +8,7 @@ module.exports.validateToken = (req, res, next) => {
 
     jwt.verify(token, key, (err, decoded) => {
         if (err) {
-            res.status(400).json({ error: 1, message: "your token has expired you need to login again " });
+            res.status(400).json({ error: 1, message: err.message });
         } else {
             db.User.findById(decoded.id, (err, obj) => {
                 if (err) {
