@@ -1,5 +1,7 @@
 const db = require("../model/user");
 const AccessToken = require("../model/access-token");
+
+
 module.exports.requiredToken = (req, res, next) => {
     let token = req.headers.access_token;
     db.User.findById(token, (err, obj) => {
@@ -35,3 +37,5 @@ module.exports.validateToken = (req, res, next) => {
 
     });
 }
+
+

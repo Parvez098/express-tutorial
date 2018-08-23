@@ -5,6 +5,7 @@ const AccessToken = require("../model/access-token");
 let md5 = require('md5');
 const authentication = require("../middleware/authentication");
 const AddressCollection = require("../model/address");
+const DataValidation = require("../Data_validation/validation");
 
 /* GET users listing. */
 
@@ -88,6 +89,26 @@ router.get("/list/:page", (req, res) => {
             res.status(200).json({ status: 1, data: items, message: "operation successfull" });
         }
     });
+});
+
+router.post("/address", authentication.validateToken, async(req, res) => {
+
+    let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
+    if (result instanceof Error) {
+        result = result.message;
+        res.status(400).json({ error: 1, message: "exception occure", data: result });
+    } else {
+        result['user_id'] = req.obj.user_id;
+        let obj = new AddressCollection(result);
+        obj.save((err, obj) => {
+            if (err) {
+                res.status(500).json({ error: 1, message: "server internal problem" });
+            } else {
+                res.status(200).json({ status: 1, message: "ok", date: obj });
+            }
+        });
+
+    }
 });
 
 
