@@ -38,4 +38,10 @@ module.exports.validateToken = (req, res, next) => {
     });
 }
 
-
+module.exports.validateId = (req, res, next) => {
+    if (req.obj.user_id == req.params.id) {
+        next();
+    } else {
+        res.status(400).json({ error: 1, message: "authentication problem with id" });
+    }
+}
