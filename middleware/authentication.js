@@ -26,7 +26,6 @@ module.exports.validateToken = (req, res, next) => {
         if (err) {
             res.status(400).json({ error: 1, message: "internal problem in token" });
         } else {
-            console.log(decoded.id);
             req.id = decoded.id;
             next();
         }
