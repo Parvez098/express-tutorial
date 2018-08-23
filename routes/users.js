@@ -39,14 +39,12 @@ router.post('/register', (req, res) => {
 });
 
 router.post("/login", (req, res) => {
-    let username = req.body.username;
-    let password = req.body.password;
-    db.User.find({ username: username, password: md5(password) }, (err, obj) => {
+    let body = req.body;
+    db.User.find({ username: body.username, password: md5(body.password) }, (err, obj) => {
         if (err) {
             res.status(500).send(err);
         } else {
             if (obj[0] != null) {
-
                 const token = jwt.sign({ id: obj[0]._id }, key, { expiresIn: '1h' });
                 res.status(200).json({ status: 1, message: "everything is ok and we ave created our token", token: token });
             } else {
@@ -56,18 +54,21 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/get/:id", [authentication.validateToken, authentication.validateId], async(req, res) => {
-    let result = await data_provider.dataProvider(req.params.id);
-    if (result instanceof Error) {
-        res.status(400).json({ error: 1, message: "error", data: result });
+router.get("/get/:id", authentication.validateToken, async(req, res) => {
+    if (req.id == req.params.id) {
+        let result = await data_provider.dataProvider(req.params.id);
+        if (result instanceof Error) {
+            res.status(400).json({ error: 1, message: "error", data: result });
+        } else {
+            res.status(200).json({ status: 1, message: "data retrived", data: result });
+        }
     } else {
-        res.status(200).json({ status: 1, message: "data retrived", data: result });
+        res.status(400).json({ error: 1, message: "check your id" });
     }
 });
 
 router.put("/delete", authentication.validateToken, (req, res, next) => {
-    let id = req.id;
-    db.User.findByIdAndRemove(id, function(err, obj) {
+    db.User.findByIdAndRemove(req.id, function(err, obj) {
         if (err) {
             res.status(500).json({ error: 1, message: "error during deleting the element" });
         } else {
@@ -108,18 +109,5 @@ router.post("/address", authentication.validateToken, async(req, res) => {
 
     }
 });
-
-
-
-
-router.get("/example", (req, res) => {
-    res.json({ token: jwt.sign({ name: "parvez" }, 'EXAMPLE') });
-});
-
-
-router.get("/tokencheck", (req, res) => {
-    console.log(req.headers.name);
-});
-
 
 module.exports = router;
