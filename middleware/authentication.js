@@ -1,12 +1,12 @@
 const db = require("../model/user");
 const AccessToken = require("../model/access-token");
-
-
+const jwt = require("jsonwebtoken");
+const key = "imgroot";
 module.exports.requiredToken = (req, res, next) => {
     let token = req.headers.access_token;
     db.User.findById(token, (err, obj) => {
         if (err) {
-            res.status(500).json({ error: 1, message: "server internal problem" });
+            res.status(500).json({ error: 1, message: "your token is expired you need to login again" });
         } else {
             if (obj == null) {
                 res.status(400).json({ error: 1, message: "there is no object that matched with access_token" });
@@ -21,25 +21,21 @@ module.exports.requiredToken = (req, res, next) => {
 
 module.exports.validateToken = (req, res, next) => {
     let token = req.headers.token;
-    AccessToken.findOne({ access_token: token, expiry: { $gte: (new Date()).getTime() } }, (err, obj) => {
 
+    jwt.verify(token, key, (err, decoded) => {
         if (err) {
-            res.status(500).json({ error: 1, message: "server internal problem" });
+            res.status(400).json({ error: 1, message: "internal problem in token" });
         } else {
-            if (obj == null) {
-                res.status(400).json({ error: 1, message: "your token is expired" });
-            } else {
-                req.obj = obj;
-                next();
-            }
-
+            console.log(decoded.id);
+            req.id = decoded.id;
+            next();
         }
+    })
 
-    });
 }
 
 module.exports.validateId = (req, res, next) => {
-    if (req.obj.user_id == req.params.id) {
+    if (req.id == req.params.id) {
         next();
     } else {
         res.status(400).json({ error: 1, message: "authentication problem with id" });
