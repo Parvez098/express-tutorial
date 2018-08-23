@@ -7,6 +7,8 @@ const authentication = require("../middleware/authentication");
 const AddressCollection = require("../model/address");
 const DataValidation = require("../Data_validation/validation");
 const data_provider = require("../data_provider/provider");
+const jwt = require("jsonwebtoken");
+const key = "imgroot";
 
 /* GET users listing. */
 
@@ -37,26 +39,14 @@ router.post('/register', (req, res) => {
 });
 
 router.post("/login", (req, res) => {
-    db.User.find({ username: req.body.username, password: md5(req.body.password) }, (err, obj) => {
+    let body = req.body;
+    db.User.find({ username: body.username, password: md5(body.password) }, (err, obj) => {
         if (err) {
             res.status(500).send(err);
         } else {
             if (obj[0] != null) {
-                let id = obj[0]._id;
-                let miliSecond = 60 * 60 * 1000;
-                let token = md5(new Date());
-                let expiry_time = new Date().getTime() + miliSecond;
-                let timeToken = new AccessToken({ user_id: id, access_token: token, expiry: expiry_time });
-
-                timeToken.save((err, obj) => {
-
-                    if (err) {
-                        res.status(500).json({ error: 1, message: "error during saving the token" });
-                    } else {
-                        res.status(200).json({ status: 1, message: "everything is ok user saved and we have created our token", token: token });
-                    }
-                });
-
+                const token = jwt.sign({ id: obj[0]._id }, key, { expiresIn: '1h' });
+                res.status(200).json({ status: 1, message: "everything is ok and we ave created our token", token: token });
             } else {
                 res.status(500).json({ error: 1, message: "there is no user whose credentials matched in a data base" });
             }
@@ -64,18 +54,21 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/get/:id", [authentication.validateToken, authentication.validateId], async(req, res) => {
-    let result = await data_provider.dataProvider(req.params.id);
-    if (result instanceof Error) {
-        res.status(400).json({ error: 1, message: "error", data: result });
+router.get("/get/:id", authentication.validateToken, async(req, res) => {
+    if (req.id == req.params.id) {
+        let result = await data_provider.dataProvider(req.params.id);
+        if (result instanceof Error) {
+            res.status(400).json({ error: 1, message: "error", data: result });
+        } else {
+            res.status(200).json({ status: 1, message: "data retrived", data: result });
+        }
     } else {
-        res.status(200).json({ status: 1, message: "data retrived", data: result });
+        res.status(400).json({ error: 1, message: "check your id" });
     }
 });
 
 router.put("/delete", authentication.validateToken, (req, res, next) => {
-    let id = req.obj._id;
-    db.User.findByIdAndRemove(id, function(err, obj) {
+    db.User.findByIdAndRemove(req.id, function(err, obj) {
         if (err) {
             res.status(500).json({ error: 1, message: "error during deleting the element" });
         } else {
@@ -104,7 +97,7 @@ router.post("/address", authentication.validateToken, async(req, res) => {
         result = result.message;
         res.status(400).json({ error: 1, message: "exception occure", data: result });
     } else {
-        result['user_id'] = req.obj.user_id;
+        result['user_id'] = req.id;
         let obj = new AddressCollection(result);
         obj.save((err, obj) => {
             if (err) {
@@ -116,6 +109,5 @@ router.post("/address", authentication.validateToken, async(req, res) => {
 
     }
 });
-
 
 module.exports = router;
