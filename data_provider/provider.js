@@ -9,12 +9,13 @@ async function dataProvider(id) {
     try {
         user_details = await DBuser.User.findById(id);
         address_details = await AddressCollection.findOne({ user_id: id });
+        result.user_details = user_details;
+        result.address_details = address_details;
+        return result;
     } catch (err) {
         return err;
     }
-    result.user_details = user_details;
-    result.address_details = address_details;
-    return result;
+
 }
 
 
