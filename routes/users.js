@@ -40,24 +40,6 @@ router.post('/register', (req, res) => {
     });
 });
 
-/*
-router.post("/login", (req, res) => {
-    let body = req.body;
-    db.User.find({ username: body.username, password: md5(body.password) }, (err, obj) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            if (obj[0] != null) {
-                const token = jwt.sign({ id: obj[0]._id }, key, { expiresIn: '1h' });
-                res.status(200).json({ status: 1, message: "everything is ok and we ave created our token", token: token });
-            } else {
-                res.status(500).json({ error: 1, message: "there is no user whose credentials matched in a data base" });
-            }
-        }
-    });
-});
-*/
-
 router.post("/login",passport.authenticate('local',{failureRedirect: '/login'}),(req,res)=>{
     res.json({"login":'successfully'});
 });
