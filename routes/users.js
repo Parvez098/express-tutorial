@@ -9,8 +9,37 @@ const DataValidation = require("../Data_validation/validation");
 const data_provider = require("../data_provider/provider");
 const jwt = require("jsonwebtoken");
 const key = "imgroot";
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
 
-/* GET users listing. */
+router.use(passport.initialize());
+router.use(passport.session());
+
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+})
+
+passport.deserializeUser(function(id, done) {
+    db.User.findById(id, function(err, user) {
+        done(err, user);
+    });
+});
+
+passport.use(new LocalStrategy(
+    function(username, password, done) {
+        db.User.findOne({ username: username }, function(err, user) {
+            if (err) { return done(err); }
+            if (!user) {
+                return done(null, false, { message: 'Incorrect username.' });
+            }
+            if (user.password != md5(password)) {
+                return done(null, false, { message: 'Incorrect password.' });
+            }
+            return done(null, user);
+        });
+    }
+));
+
 
 router.post('/register', (req, res) => {
     db.User.find({ $or: [{ username: req.body.username }, { email: req.body.email }] }, (err, obj) => {
@@ -38,76 +67,78 @@ router.post('/register', (req, res) => {
     });
 });
 
-router.post("/login", (req, res) => {
-    let body = req.body;
-    db.User.find({ username: body.username, password: md5(body.password) }, (err, obj) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            if (obj[0] != null) {
-                const token = jwt.sign({ id: obj[0]._id }, key, { expiresIn: '1h' });
-                res.status(200).json({ status: 1, message: "everything is ok and we ave created our token", token: token });
-            } else {
-                res.status(500).json({ error: 1, message: "there is no user whose credentials matched in a data base" });
-            }
-        }
-    });
+router.post("/login", passport.authenticate('local', { failureRedirect: 'unsucces' }), (req, res) => {
+    res.redirect('succes')
 });
 
-router.get("/get/:id", authentication.validateToken, async(req, res) => {
-    if (req.id == req.params.id) {
+router.get("/get/:id", authentication.validateRequest,async(req, res) => {
+  
+      if (req.user._id == req.params.id) {
         let result = await data_provider.dataProvider(req.params.id);
         if (result instanceof Error) {
             res.status(400).json({ error: 1, message: "error", data: result });
         } else {
             res.status(200).json({ status: 1, message: "data retrived", data: result });
         }
-    } else {
+     } else {
         res.status(400).json({ error: 1, message: "check your id" });
-    }
-});
-
-router.put("/delete", authentication.validateToken, (req, res, next) => {
-    db.User.findByIdAndRemove(req.id, function(err, obj) {
-        if (err) {
-            res.status(500).json({ error: 1, message: "error during deleting the element" });
-        } else {
-            res.status(200).json({ status: 1, data: obj, message: "deletion successfully" });
-        }
+     }    
     });
+
+router.put("/delete",authentication.validateRequest, (req, res, next) => {
+   
+        db.User.findByIdAndRemove(req.user._id, function(err, obj) {
+            if (err) {
+                res.status(500).json({ error: 1, message: "error during deleting the element" });
+            } else {
+                res.status(200).json({ status: 1, data: obj, message: "deletion successfully" });
+            }
+        });
+  
+
 });
 
-router.get("/list/:page", (req, res) => {
-    let page = req.params.page;
-    let limit = 10;
+router.get("/list/:page",authentication.validateRequest, (req, res) => {
 
-    db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
-        if (err) {
-            res.status(500).json({ error: 1, message: "server internal problem" });
-        } else {
-            res.status(200).json({ status: 1, data: items, message: "operation successfull" });
-        }
-    });
-});
-
-router.post("/address", authentication.validateToken, async(req, res) => {
-
-    let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
-    if (result instanceof Error) {
-        result = result.message;
-        res.status(400).json({ error: 1, message: "exception occure", data: result });
-    } else {
-        result['user_id'] = req.id;
-        let obj = new AddressCollection(result);
-        obj.save((err, obj) => {
+        let page = req.params.page;
+        let limit = 10;
+        db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
             if (err) {
                 res.status(500).json({ error: 1, message: "server internal problem" });
             } else {
-                res.status(200).json({ status: 1, message: "ok", date: obj });
+                res.status(200).json({ status: 1, data: items, message: "operation successfull" });
             }
         });
+  
 
-    }
 });
 
+router.post("/address",authentication.validateRequest, async(req, res) => {
+
+        let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
+        if (result instanceof Error) {
+            result = result.message;
+            res.status(400).json({ error: 1, message: "exception occure", data: result });
+        } else {
+            result['user_id'] = req.id;
+            let obj = new AddressCollection(result);
+            obj.save((err, obj) => {
+                if (err) {
+                    res.status(500).json({ error: 1, message: "server internal problem" });
+                } else {
+                    res.status(200).json({ status: 1, message: "ok", date: obj });
+                }
+            });
+
+        }
+    
+});
+
+router.get('/succes', (req, res) => {
+    console.log(req.user._id);
+    res.status(200).json({ status: 1, message: "successfull login" });
+});
+router.get('/unsucces', (req, res) => {
+    res.status(400).json({ error: 1, message: "unsucessfull login" });
+});
 module.exports = router;

@@ -21,3 +21,13 @@ module.exports.validateToken = (req, res, next) => {
         }
     });
 }
+
+
+
+module.exports.validateRequest = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        next();
+    } else {
+        res.status(400).json({ error: 1, message: "your session is not authenticated" });
+    }
+}
