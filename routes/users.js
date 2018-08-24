@@ -71,62 +71,79 @@ router.post("/login", passport.authenticate('local', { failureRedirect: 'unsucce
     res.redirect('succes')
 });
 
-router.get("/get/:id", authentication.validateToken, async(req, res) => {
-    if (req.id == req.params.id) {
-        let result = await data_provider.dataProvider(req.params.id);
-        if (result instanceof Error) {
-            res.status(400).json({ error: 1, message: "error", data: result });
+router.get("/get/:id", async(req, res) => {
+    if (req.isAuthenticated()) {
+        if (req.user._id == req.params.id) {
+            let result = await data_provider.dataProvider(req.params.id);
+            if (result instanceof Error) {
+                res.status(400).json({ error: 1, message: "error", data: result });
+            } else {
+                res.status(200).json({ status: 1, message: "data retrived", data: result });
+            }
         } else {
-            res.status(200).json({ status: 1, message: "data retrived", data: result });
+            res.status(400).json({ error: 1, message: "check your id" });
         }
     } else {
-        res.status(400).json({ error: 1, message: "check your id" });
+        req.status(400).json({ error: 1, message: "your session is not authenticated" });
     }
+
 });
 
-router.put("/delete", authentication.validateToken, (req, res, next) => {
-    db.User.findByIdAndRemove(req.id, function(err, obj) {
-        if (err) {
-            res.status(500).json({ error: 1, message: "error during deleting the element" });
-        } else {
-            res.status(200).json({ status: 1, data: obj, message: "deletion successfully" });
-        }
-    });
+router.put("/delete", (req, res, next) => {
+    if (req.isAuthenticated()) {
+        db.User.findByIdAndRemove(req.user._id, function(err, obj) {
+            if (err) {
+                res.status(500).json({ error: 1, message: "error during deleting the element" });
+            } else {
+                res.status(200).json({ status: 1, data: obj, message: "deletion successfully" });
+            }
+        });
+    } else {
+        res.status(400).json({ error: 1, message: "your session is not authenticated" });
+    }
+
 });
 
 router.get("/list/:page", (req, res) => {
-    let page = req.params.page;
-    let limit = 10;
-    db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
-        if (err) {
-            res.status(500).json({ error: 1, message: "server internal problem" });
-        } else {
-            res.status(200).json({ status: 1, data: items, message: "operation successfull" });
-        }
-    });
-});
-
-router.post("/address", authentication.validateToken, async(req, res) => {
-
-    let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
-    if (result instanceof Error) {
-        result = result.message;
-        res.status(400).json({ error: 1, message: "exception occure", data: result });
-    } else {
-        result['user_id'] = req.id;
-        let obj = new AddressCollection(result);
-        obj.save((err, obj) => {
+    if (req.isAuthenticated()) {
+        let page = req.params.page;
+        let limit = 10;
+        db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
             if (err) {
                 res.status(500).json({ error: 1, message: "server internal problem" });
             } else {
-                res.status(200).json({ status: 1, message: "ok", date: obj });
+                res.status(200).json({ status: 1, data: items, message: "operation successfull" });
             }
         });
+    } else {
+        res.status(400).json({ error: 1, message: "your session is not authenticated" });
+    }
 
+});
+
+router.post("/address", async(req, res) => {
+    if (req.isAuthenticated()) {
+        let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
+        if (result instanceof Error) {
+            result = result.message;
+            res.status(400).json({ error: 1, message: "exception occure", data: result });
+        } else {
+            result['user_id'] = req.id;
+            let obj = new AddressCollection(result);
+            obj.save((err, obj) => {
+                if (err) {
+                    res.status(500).json({ error: 1, message: "server internal problem" });
+                } else {
+                    res.status(200).json({ status: 1, message: "ok", date: obj });
+                }
+            });
+
+        }
     }
 });
 
 router.get('/succes', (req, res) => {
+    console.log(req.user._id);
     res.status(200).json({ status: 1, message: "successfull login" });
 });
 router.get('/unsucces', (req, res) => {
