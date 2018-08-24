@@ -6,13 +6,13 @@ var logger = require('morgan');
 const expressValidator = require('express-validator');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
 var app = express();
-
+const passportConfig = require("./passport_setup/config");
+const passport = require("passport");
 // view engine setup
+app.use(passport.initialize());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

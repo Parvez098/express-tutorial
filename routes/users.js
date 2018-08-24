@@ -9,6 +9,8 @@ const DataValidation = require("../Data_validation/validation");
 const data_provider = require("../data_provider/provider");
 const jwt = require("jsonwebtoken");
 const key = "imgroot";
+const passport = require("passport");
+
 
 /* GET users listing. */
 
@@ -38,6 +40,7 @@ router.post('/register', (req, res) => {
     });
 });
 
+/*
 router.post("/login", (req, res) => {
     let body = req.body;
     db.User.find({ username: body.username, password: md5(body.password) }, (err, obj) => {
@@ -52,6 +55,11 @@ router.post("/login", (req, res) => {
             }
         }
     });
+});
+*/
+
+router.post("/login",passport.authenticate('local',{failureRedirect: '/login'}),(req,res)=>{
+    res.json({"login":'successfully'});
 });
 
 router.get("/get/:id", authentication.validateToken, async(req, res) => {
