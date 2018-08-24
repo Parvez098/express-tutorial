@@ -10,9 +10,36 @@ const data_provider = require("../data_provider/provider");
 const jwt = require("jsonwebtoken");
 const key = "imgroot";
 const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
 
+router.use(passport.initialize());
+router.use(passport.session());
 
-/* GET users listing. */
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+})
+
+passport.deserializeUser(function(id, done) {
+    db.User.findById(id, function(err, user) {
+        done(err, user);
+    });
+});
+
+passport.use(new LocalStrategy(
+    function(username, password, done) {
+        db.User.findOne({ username: username }, function(err, user) {
+            if (err) { return done(err); }
+            if (!user) {
+                return done(null, false, { message: 'Incorrect username.' });
+            }
+            if (user.password != md5(password)) {
+                return done(null, false, { message: 'Incorrect password.' });
+            }
+            return done(null, user);
+        });
+    }
+));
+
 
 router.post('/register', (req, res) => {
     db.User.find({ $or: [{ username: req.body.username }, { email: req.body.email }] }, (err, obj) => {
@@ -40,8 +67,8 @@ router.post('/register', (req, res) => {
     });
 });
 
-router.post("/login",passport.authenticate('local',{failureRedirect: '/login'}),(req,res)=>{
-    res.json({"login":'successfully'});
+router.post("/login", passport.authenticate('local', { failureRedirect: 'unsucces' }), (req, res) => {
+    res.redirect('succes')
 });
 
 router.get("/get/:id", authentication.validateToken, async(req, res) => {
@@ -70,7 +97,6 @@ router.put("/delete", authentication.validateToken, (req, res, next) => {
 router.get("/list/:page", (req, res) => {
     let page = req.params.page;
     let limit = 10;
-
     db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
         if (err) {
             res.status(500).json({ error: 1, message: "server internal problem" });
@@ -100,4 +126,10 @@ router.post("/address", authentication.validateToken, async(req, res) => {
     }
 });
 
+router.get('/succes', (req, res) => {
+    res.status(200).json({ status: 1, message: "successfull login" });
+});
+router.get('/unsucces', (req, res) => {
+    res.status(400).json({ error: 1, message: "unsucessfull login" });
+});
 module.exports = router;
