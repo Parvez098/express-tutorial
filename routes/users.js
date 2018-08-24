@@ -71,26 +71,22 @@ router.post("/login", passport.authenticate('local', { failureRedirect: 'unsucce
     res.redirect('succes')
 });
 
-router.get("/get/:id", async(req, res) => {
-    if (req.isAuthenticated()) {
-        if (req.user._id == req.params.id) {
-            let result = await data_provider.dataProvider(req.params.id);
-            if (result instanceof Error) {
-                res.status(400).json({ error: 1, message: "error", data: result });
-            } else {
-                res.status(200).json({ status: 1, message: "data retrived", data: result });
-            }
+router.get("/get/:id", authentication.validateRequest,async(req, res) => {
+  
+      if (req.user._id == req.params.id) {
+        let result = await data_provider.dataProvider(req.params.id);
+        if (result instanceof Error) {
+            res.status(400).json({ error: 1, message: "error", data: result });
         } else {
-            res.status(400).json({ error: 1, message: "check your id" });
+            res.status(200).json({ status: 1, message: "data retrived", data: result });
         }
-    } else {
-        req.status(400).json({ error: 1, message: "your session is not authenticated" });
-    }
+     } else {
+        res.status(400).json({ error: 1, message: "check your id" });
+     }    
+    });
 
-});
-
-router.put("/delete", (req, res, next) => {
-    if (req.isAuthenticated()) {
+router.put("/delete",authentication.validateRequest, (req, res, next) => {
+   
         db.User.findByIdAndRemove(req.user._id, function(err, obj) {
             if (err) {
                 res.status(500).json({ error: 1, message: "error during deleting the element" });
@@ -98,14 +94,12 @@ router.put("/delete", (req, res, next) => {
                 res.status(200).json({ status: 1, data: obj, message: "deletion successfully" });
             }
         });
-    } else {
-        res.status(400).json({ error: 1, message: "your session is not authenticated" });
-    }
+  
 
 });
 
-router.get("/list/:page", (req, res) => {
-    if (req.isAuthenticated()) {
+router.get("/list/:page",authentication.validateRequest, (req, res) => {
+
         let page = req.params.page;
         let limit = 10;
         db.User.find().skip(page * limit).limit(limit).exec((err, items) => {
@@ -115,14 +109,12 @@ router.get("/list/:page", (req, res) => {
                 res.status(200).json({ status: 1, data: items, message: "operation successfull" });
             }
         });
-    } else {
-        res.status(400).json({ error: 1, message: "your session is not authenticated" });
-    }
+  
 
 });
 
-router.post("/address", async(req, res) => {
-    if (req.isAuthenticated()) {
+router.post("/address",authentication.validateRequest, async(req, res) => {
+
         let result = await DataValidation.dataValidation(req.checkBody, req.validationErrors, req.body);
         if (result instanceof Error) {
             result = result.message;
@@ -139,7 +131,7 @@ router.post("/address", async(req, res) => {
             });
 
         }
-    }
+    
 });
 
 router.get('/succes', (req, res) => {
